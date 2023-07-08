@@ -1,0 +1,178 @@
+---
+title: "Unsupervised classification (clustering) of satellite images"
+author: "Krzysztof Dyba"
+output:
+  html_document:
+    toc: yes
+    toc_float: true
+date: "29 August 2023"
+---
+
+## Data loading
+
+```{r message=FALSE, warning=FALSE}
+# load the package
+library("terra")
+```
+
+In the first step, we need to create a list of files (rasters) that we are
+going to load. To do this, we can use the `list.files()` function, which
+takes a path to a folder with files as an argument. In addition, we must
+indicate what kind of files we want to load (`pattern = "\\.TIF$"`) and
+return full paths to the files (`full.names = TRUE`).
+
+```{r}
+# listing files from a directory
+files = list.files("dane_cut/", pattern = "\\.TIF$", full.names = TRUE)
+files
+```
+ 
+Once we have created a list of files, we can load them using the `rast()`
+function from the **terra** package and then display the metadata.
+
+```{r}
+# load raster data
+landsat = rast(files)
+landsat # calling the object displays the metadata
+```
+
+We can also shorten or rename the spectral bands. Before this, make sure
+that the bands are loaded in the correct order.
+
+```{r}
+names(landsat) # original names
+names(landsat) = paste0("B", 1:7) # shorten the names
+names(landsat) # new names
+
+# or alternatively rename
+# names(landsat) = c("Ultra Blue", "Blue", "Green", "Red", "NIR", "SWIR1", "SWIR2")
+```
+
+Loading vector data is done in an analogous way using the `vect()` function.
+
+```{r}
+# load vector data
+poly = vect("Poznan.gpkg")
+poly
+```
+
+As we can see from the metadata, raster and vector data have different
+coordinate reference systems (CRS), which is troublesome. The easiest way
+is to transform the vector data into a raster's CRS and we can do it with
+the `project()` function and specifying the EPSG code.
+
+```{r}
+poly = project(poly, "EPSG:32633")
+crs(poly, describe = TRUE)$code # check EPSG after transformation
+```
+
+Now we can prepare a simple visualization using the near infrared band (NIR; B5)
+and polygon as an example.
+
+```{r}
+# visualization
+plot(landsat[[5]], main = "Poznan commune") # alternatively: plot(landsat[["B5"]])
+plot(poly, add = TRUE)
+```
+
+## Raster processing
+
+The extent of our analysis area is limited to the Poznan commune, while the
+satellite scene has a much larger extent. In such a situation, we can crop the
+rasters, so that their further processing will be faster and the results
+will take up less space on disk. The `crop()` function is used to crop the
+rasters, and we need to specify the raster and vector as arguments.
+
+Note that the rasters are represented as matrices, so the cropping is done
+to the bounding box. To include only the area of our polygon in the analysis,
+we need to mask the pixels outside the boundary. This can be done by setting
+the `mask = TRUE` argument in the aforementioned function.
+
+```{r}
+landsat = crop(landsat, poly, mask = TRUE)
+plot(landsat[[5]], main = "Poznan commune")
+plot(poly, add = TRUE)
+```
+
+In the next step, we can easily check the descriptive statistics of our dataset.
+
+```{r warning=FALSE}
+summary(landsat)
+```
+
+As we can see, the spectral reflectance values are several thousand for each
+band and are encoded as integers. The spectral reflectance should be in the
+range from 0 to 1. Therefore, we need to scale our data using the following
+equation (this only applies to reflectance, not temperature!):
+
+$$x = x \cdot 0.0000275 - 0.2$$
+
+For example, the pixel value in the near infrared (NIR) band is 15000. Using the
+above formula, we need to multiply this value by 0.0000275 (scale factor) and
+then subtract 0.2 (offset). As a result, we will get a reflection equal
+to 0.2125. Note that each product/collection has a different formula and
+it is necessary to consult the documentation.
+
+We don't need to apply this formula separately for each band in the loop
+because the arithmetic operations in the **terra** package is applied to
+all bands by default.
+
+```{r warning=FALSE}
+landsat = landsat * 2.75e-05 - 0.2
+summary(landsat)
+```
+
+We can still see that some values exceed the range of 0 to 1. These are
+outliers that are usually associated with incorrect measurement or
+oversaturation. We can solve this problem in two ways:
+
+1. Replace these values with missing data (*NA*).
+2. Trim to minimum and maximum value.
+
+The first way can cause us to lose a large part of the dataset. The second way,
+on the other hand, can cause skewed results.
+
+```{r}
+# method 1
+landsat[landsat < 0] = NA
+landsat[landsat > 1] = NA
+```
+
+```{r eval=FALSE}
+# method 2
+landsat[landsat < 0] = 0
+landsat[landsat > 1] = 1
+```
+
+After scaling the values, we can display the RGB composition. In this case,
+instead of `plot()` function, use `plotRGB()` function and define the order of
+red, green and blue bands. In addition, we need to specify the maximum
+reflection value for the bands (in our case `scale = 1`). It often happens
+that compositions are too dark/bright, then is helpful to apply color stretching
+using the `stretch = "lin"` or `stretch = "hist"` argument.
+
+```{r}
+# plotRGB(landsat, r = 4, g = 3, b = 2, scale = 1)
+plotRGB(landsat, r = 4, g = 3, b = 2, scale = 1, stretch = "lin")
+```
+
+## Clustering
+
+```{r}
+# load clustering package
+library("cluster")
+```
+
+Data for modeling must be prepared in an appropriate way. Classification
+models most often require a matrix or data frame at the training stage.
+Raster data can be transformed into a matrix using the `values()` function
+(or alternatively coercing by `as.matrix()`).
+
+```{r}
+mat = values(landsat)
+nrow(mat) # print number of rows/pixels
+```
+
+
+
+
