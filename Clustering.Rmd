@@ -22,7 +22,7 @@ indicate what kind of files we want to load (`pattern = "\\.TIF$"`) and
 return full paths to the files (`full.names = TRUE`).
 
 ```{r}
-# listing files from a directory
+# list files from a directory
 files = list.files("dane_cut/", pattern = "\\.TIF$", full.names = TRUE)
 files
 ```
@@ -165,13 +165,206 @@ library("cluster")
 
 Data for modeling must be prepared in an appropriate way. Classification
 models most often require a matrix or data frame at the training stage.
-Raster data can be transformed into a matrix using the `values()` function
-(or alternatively coercing by `as.matrix()`).
+Raster data can be transformed into a matrix using the `values()` function.
 
 ```{r}
 mat = values(landsat)
 nrow(mat) # print number of rows/pixels
 ```
+
+Using the interactive `View()` function, we can see what our matrix looks like.
+
+```{r, eval=FALSE}
+View(mat)
+```
+
+As we can see, a lot of its values are marked as missing data (mostly they are
+outside the analysis area). Usually models do not support *NA*, so we need to
+remove them. A dedicated function `na.omit()` can be used for this.
+
+```{r}
+mat_omit = na.omit(mat)
+nrow(mat_omit)
+```
+
+Now we will move on to the next stage of the analysis, which is to
+train the model. There are many clustering methods and models
+(see [CRAN Task View](https://cran.r-project.org/web/views/Cluster.html)),
+but in this example we will use the simplest
+[k-means](https://en.wikipedia.org/wiki/K-means_clustering) clustering method.
+This model only requires the number of groups/clusters (`centers` argument) to
+be given in advance. This is a stochastic algorithm, so it returns different
+results each time. To make the analysis repeatable we need to set the seed of
+randomness -- `set.seed()`.
+
+```{r warning=FALSE}
+set.seed(1)
+mdl = kmeans(mat_omit, centers = 6)
+```
+
+As a result of the above operation, we received, among others:
+
+1. Calculated group averages for each band `(mdl$centers)`.
+2. Vector with classified matrix (pixels) values `(mdl$cluster)`.
+
+Let's display these objects:
+
+```{r}
+mdl$centers
+```
+
+```{r}
+head(mdl$cluster) # display the first 6 elements
+```
+
+This means that the first row (representing a single pixel) belongs to group 2,
+the second to group 2, the third to group 2, and so on.
+
+## Validation
+
+An inseparable element of modeling is the validation of the created models.
+The challenge is to choose the right grouping method for a specific dataset
+and determine the appropriate number of groups. Note that increasing the number
+of clusters increases the similarity between objects in a cluster, but with
+more clusters, their interpretation becomes more difficult.
+
+The most common way to validate clustering results is to use internal metrics,
+such as [Dunn index](https://en.wikipedia.org/wiki/Dunn_index),
+[Davies–Bouldin index](https://en.wikipedia.org/wiki/Davies%E2%80%93Bouldin_index)
+or [silhouette index](https://en.wikipedia.org/wiki/Silhouette_(clustering)).
+In this example, we will use the latter.
+
+Silhouette index evaluates the compactness and separation of the clusters
+based on the distances between objects within the same cluster and between
+objects in different clusters. The values of this index range from -1 to 1.
+A value close to 1 indicates that the object is well clustered and is far away
+from neighboring clusters. A value close to -1 suggests that the object may have
+been assigned to the wrong cluster. A value near 0 indicates that the object
+is very close to the boundary between different clusters. Thus, in general,
+a higher value of this index indicates better clustering results. See the
+`cluster::silhouette()` documentation for more details.
+
+Now let's try to calculate this index. Basically, using this index requires
+calculating the similarity of each object with every object, which in our case
+is an impossible task (our dataset consists of 2.5 million objects). To do this,
+we need to draw a smaller sample (let's say $n = 10 000$). In the function,
+we need to specify two objects -- a vector with clusters and a dissimilarity
+matrix, which can be calculated in advance using the `dist()` function. 
+
+```{r}
+set.seed(1)
+# draw sample indexes
+idx = sample(1:nrow(mat_omit), size = 10000)
+head(idx)
+```
+
+```{r}
+# calculate silhouette index
+sil = silhouette(mdl$cluster[idx], dist(mat_omit[idx, ]))
+summary(sil)
+```
+
+The average cluster convergence is `r round(mean(sil[, 3]), 2)`. This is not the
+best result. We should try to increase the number of clusters or use another
+clustering method. We can also check the results on the chart.
+
+```{r}
+colors = rainbow(n = 6) # define the color scheme
+plot(sil, border = NA, col = colors, main = "Silhouette Index")
+```
+
+## Interpretation
+
+The essence of grouping is to create a group of similar objects, but our task
+is to interpret what the created groups represent and name them. Interpretation
+is a difficult task, and often the results are unclear. For this purpose, it
+is necessary to analyze the descriptive statistics of groups and to use various
+plots and map compositions. Knowledge of the spectral properties of objects is
+also very useful.
+
+So let's try to interpret the obtained clusters by assisting with a boxplot.
+The **ggplot2** package works best for creating visualizations. Here you
+can find a free [manual](https://ggplot2-book.org/) and ready-made
+[recipes](https://r-graphics.org/).
+
+**ggplot2** requires preparing the dataset to the appropriate form. The data
+must be presented as a data frame in the so-called long form (multiple rows),
+while base functions for visualization require wide form (multiple columns).
+This change can be made easily using the **tidyr** package.
+
+```{r message=FALSE}
+# install.packages(c("tidyr", "ggplot2"))
+library("tidyr") # data transformation
+library("ggplot2") # data visualization
+```
+
+As we noted earlier, our dataset is quite large and there is no need to present
+all the data. We can do it more efficiently by using a previously drawn sample.
+Now we need to combine the drawn rows from the matrix with the corresponding
+clusters (`cbind()`). Then we will convert the matrix into a data frame
+(`as.data.frame()`).
+
+```{r}
+stats = cbind(mat_omit[idx, ], cluster = mdl$cluster[idx])
+stats = as.data.frame(stats)
+head(stats)
+```
+
+The displayed data is in a wide form (each spectral band is stored in a separate
+column). Now we need to change the form, in which we get two columns -- the band
+and the value. To do this, we will use the `pivot_longer()` function.
+
+```{r}
+stats = pivot_longer(stats, cols = 1:7, names_to = "band", values_to = "value")
+# change the data type to factor
+stats$cluster = as.factor(stats$cluster)
+stats$band = as.factor(stats$band)
+head(stats)
+```
+
+The data structure is already prepared. Now let's create a simple boxplot.
+
+```{r}
+ggplot(stats, aes(x = band, y = value, fill = cluster)) +
+  geom_boxplot()
+```
+
+By changing a few default parameters, we can improve the perception of this figure.
+
+```{r}
+ggplot(stats, aes(x = band, y = value, fill = cluster)) +
+  geom_boxplot(show.legend = FALSE) +
+  scale_fill_manual(values = colors) +
+  facet_wrap(vars(cluster)) +
+  xlab("Spectral band") +
+  ylab("Reflectance") +
+  theme_light()
+```
+
+NAPISAC INTERPRETACJE
+
+
+## Final map
+
+```{r}
+vec = rep(NA, ncell(landsat)) # prepare an empty vector
+vec[complete.cases(mat)] = mdl$cluster # assign clusters
+clustering = rast(landsat, nlyrs = 1, vals = vec) # create raster
+plot(clustering, type = "classes", col = colors)
+```
+
+If the result is satisfactory, we can save it using the `writeRaster()` function.
+Such a file can be later loaded in **R** or another program that supports spatial
+data (e.g. **QGIS**). In addition, for categorical data, it is useful to set the
+datatype as `Byte` / `INT1U` when saving.
+
+```{r eval=FALSE}
+writeRaster(clustering, "clustering.tif", datatype = "INT1U")
+```
+
+## Summary
+
+
 
 
 
