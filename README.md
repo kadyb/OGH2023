@@ -1,5 +1,3 @@
-# Satellite images clustering
-
 This repository contains materials for the "**Unsupervised classification (clustering) of satellite images**
 workshop on [OpenGeoHub Summer School 2023](https://opengeohub.org/summer-school/opengeohub-summer-school-poznan-2023/).
 
