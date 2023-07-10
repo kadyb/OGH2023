@@ -1,0 +1,17 @@
+h1.title {
+  text-align: center;
+  font-weight: bold;
+}
+
+h4.author {
+  text-align: center;
+  font-weight: bold;
+}
+
+h4.date {
+  text-align: center;
+}
+
+body {
+  text-align: justify
+}

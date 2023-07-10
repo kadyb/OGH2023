@@ -5,6 +5,7 @@ output:
   html_document:
     toc: yes
     toc_float: true
+    css: "style.css"
 date: "29 August 2023"
 ---
 
@@ -114,7 +115,7 @@ to 0.2125. Note that each product/collection has a different formula and
 it is necessary to consult the documentation.
 
 We don't need to apply this formula separately for each band in the loop
-because the arithmetic operations in the **terra** package is applied to
+because the arithmetic operations in the **terra** package are applied to
 all bands by default.
 
 ```{r warning=FALSE}
@@ -148,8 +149,8 @@ After scaling the values, we can display the RGB composition. In this case,
 instead of `plot()` function, use `plotRGB()` function and define the order of
 red, green and blue bands. In addition, we need to specify the maximum
 reflection value for the bands (in our case `scale = 1`). It often happens
-that compositions are too dark/bright, then is helpful to apply color stretching
-using the `stretch = "lin"` or `stretch = "hist"` argument.
+that compositions are too dark/bright, then it is helpful to apply color
+stretching using the `stretch = "lin"` or `stretch = "hist"` argument.
 
 ```{r}
 # plotRGB(landsat, r = 4, g = 3, b = 2, scale = 1)
@@ -359,7 +360,7 @@ than that of forests. Therefore, this cluster represents a forest.
 are outliers close to 0 in all bands. These values represent water objects that
 absorb radiation. Of course, this is not a correct classification -- water
 objects and forests should be assigned to separate clusters.
-* **Cluster 4** -- see description of cluster 2.
+* **Cluster 4** -- cropland (see description of cluster 2).
 * **Cluster 5** -- low reflectance in the visible bands and higher reflectance
 in the NIR and SWIR bands may indicate buildings, generally artificial objects.
 * **Cluster 6** -- relatively high reflection in all bands (including NIR and
@@ -370,7 +371,7 @@ vegetation cover, which are usually light brown or grey.
 
 The last step is to prepare a classification map. First, we need to prepare
 an empty vector with the length of the number of raster pixels. This can be
-checked using the `ncell()` function. In our case it is `r ncell(landsat)`.
+checked using the `ncell()` function. In our case it is 4,182,465.
 Next, we need to assign our clusters in the vector to the appropriate places,
 i.e. those that are not masked (*NA*). The unmasked values can be referenced
 by the `complete.cases()` function. In the last step, copy the metadata of
@@ -411,7 +412,7 @@ satellite imagery. The content can be expanded to include more topics on:
 * cloud data processing
 * integration of various sensors (e.g. Sentinel, UAV) and data (e.g. DEM)
 * spatial validation
-* selection of explanatory variables
+* selection of explanatory variables and dimensionality reduction
 
 To reference to the above, the following issues can also be addressed:
 
@@ -431,7 +432,7 @@ other types of spectral indexes, and the thermal and panchromatic bands
 so we could load all the data into memory. However, usually the model is
 trained on a sample and then applied to the whole area. Unfortunately, the
 `kmeans()` function does not have a `predict` method, so we have to write it
-ourselves. It is not complicated, it just requires calculating the pixel
+ourselves. It is not complicated; it just requires calculating the pixel
 distance for each cluster and selecting the closest one. The second thing, in
 order to speed up the prediction, it would be worth parallelizing this process.
 A final note, keep in mind that the developed model may work incorrectly in
