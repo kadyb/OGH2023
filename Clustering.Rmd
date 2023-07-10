@@ -341,16 +341,55 @@ ggplot(stats, aes(x = band, y = value, fill = cluster)) +
   theme_light()
 ```
 
-NAPISAC INTERPRETACJE
+Based on the above graph, we can analyze the spectral properties of the
+clusters, and therefore interpret what objects they represent. Simplified
+conclusions may be as follows:
 
+* **Cluster 1** -- the significant difference between the NIR and RED bands
+indicates the presence of vegetation, in addition, we can see a high reflection
+in the SWIR bands, which relates to soils. Thus, we can conclude that this
+cluster represents barren areas with little vegetation.
+* **Cluster 2** -- the large difference between the NIR and RED bands,
+indicates a high level of biomass. Clusters 2 and 4 have similar distributions,
+but in cluster 2 there is less difference between the mentioned bands. The data
+is from the beginning of June, so we can assume that crops have almost reached
+the maximum level of biomass (in this climate zone), which should be higher
+than that of forests. Therefore, this cluster represents a forest.
+* **Cluster 3** -- this cluster looks similar to cluster 2 except that there
+are outliers close to 0 in all bands. These values represent water objects that
+absorb radiation. Of course, this is not a correct classification -- water
+objects and forests should be assigned to separate clusters.
+* **Cluster 4** -- see description of cluster 2.
+* **Cluster 5** -- low reflectance in the visible bands and higher reflectance
+in the NIR and SWIR bands may indicate buildings, generally artificial objects.
+* **Cluster 6** -- relatively high reflection in all bands (including NIR and
+SWIR) indicates a bright object. In this case, they are bare soils without
+vegetation cover, which are usually light brown or grey.
 
 ## Final map
 
+The last step is to prepare a classification map. First, we need to prepare
+an empty vector with the length of the number of raster pixels. This can be
+checked using the `ncell()` function. In our case it is `r ncell(landsat)`.
+Next, we need to assign our clusters in the vector to the appropriate places,
+i.e. those that are not masked (*NA*). The unmasked values can be referenced
+by the `complete.cases()` function. In the last step, copy the metadata of
+the `landsat` object, but only with one layer, and assign it the values of
+the `vec` vector.
+
 ```{r}
 vec = rep(NA, ncell(landsat)) # prepare an empty vector
-vec[complete.cases(mat)] = mdl$cluster # assign clusters
+vec[complete.cases(mat)] = mdl$cluster # assign clusters to vector if not NA
 clustering = rast(landsat, nlyrs = 1, vals = vec) # create raster
-plot(clustering, type = "classes", col = colors)
+```
+
+Now let's represent the result of clustering on the map (so-called **land cover**)
+using the appropriate colors and names of the clusters.
+
+```{r}
+colors = c("#91632b", "#086209", "#086209", "#fdd327", "#d20000", "#d9d9d9")
+category = c("barren", "forest", "forest/water", "cropland", "buildings", "bare soil")
+plot(clustering, col = colors, type = "classes", levels = category)
 ```
 
 If the result is satisfactory, we can save it using the `writeRaster()` function.
@@ -364,8 +403,59 @@ writeRaster(clustering, "clustering.tif", datatype = "INT1U")
 
 ## Summary
 
+This workshop is only an outline of the use of unsupervised classification for
+satellite imagery. The content can be expanded to include more topics on:
 
+* automatic search and download of satellite data
+* multi-temporal analysis
+* cloud data processing
+* integration of various sensors (e.g. Sentinel, UAV) and data (e.g. DEM)
+* spatial validation
+* selection of explanatory variables
 
+To reference to the above, the following issues can also be addressed:
 
+1. Post-processing of results -- the used clustering method is pixel-based,
+which means that neighboring pixels are not considered in the classification.
+This causes the pepper and salt effect. This can be slightly improved by using
+a modal filter (`terra::focal()`) or sieve filter (`terra::sieve()`).
+Another approach is to use explanatory variables that are calculated in
+a moving window or at smaller spatial scales.
+2. Separate forests from water objects -- in our clustering, forests and water
+objects were incorrectly classified into one cluster. As a solution, a water
+spatial index can be calculated to detect water (check Table 2 from
+[this publication](https://www.mdpi.com/2073-4441/9/4/256)). Moreover,
+other types of spectral indexes, and the thermal and panchromatic bands
+(at a higher resolution of 15m) can be included in this analysis.
+3. Prediction in larger or new areas -- our analysis covered a small area,
+so we could load all the data into memory. However, usually the model is
+trained on a sample and then applied to the whole area. Unfortunately, the
+`kmeans()` function does not have a `predict` method, so we have to write it
+ourselves. It is not complicated, it just requires calculating the pixel
+distance for each cluster and selecting the closest one. The second thing, in
+order to speed up the prediction, it would be worth parallelizing this process.
+A final note, keep in mind that the developed model may work incorrectly in
+other locations.
+4. Comparison of results with supervised classification -- there are many land
+cover maps (see
+[CORINE Land Cover](https://land.copernicus.eu/pan-european/corine-land-cover),
+[ESA WorldCover](https://esa-worldcover.org/en),
+[ESRI Land Cover](https://livingatlas.arcgis.com/landcover/)).
+It would be nice to compare the two approaches.
 
+If you are interested in this topic, you can find more information in the
+following free books:
 
+* [Spatial Data Science with R and “terra”](https://rspatial.org/)
+* [Geocomputation with R](https://r.geocompx.org/)
+* [Spatial Data Science: With Applications in R](https://r-spatial.org/book/)
+
+It is also worth checking out other packages for
+[spatial data analysis](https://cran.r-project.org/web/views/Spatial.html)
+and [machine learning](https://cran.r-project.org/web/views/MachineLearning.html)
+([mlr3](https://mlr3.mlr-org.com/) and [tidymodels](https://www.tidymodels.org/)
+frameworks in particular).
+
+If you have any problem, it is best to look for help on StackOverflow or
+RStudio Community. Often interesting discussions appear on Twitter / Mastodon
+(#rspatial) and GitHub (https://github.com/rspatial; https://github.com/r-spatial).
