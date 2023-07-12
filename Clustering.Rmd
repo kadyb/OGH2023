@@ -369,14 +369,14 @@ vegetation cover, which are usually light brown or grey.
 
 ## Final map
 
-The last step is to prepare a classification map. First, we need to prepare
-an empty vector with the length of the number of raster pixels. This can be
-checked using the `ncell()` function. In our case it is 4,182,465.
-Next, we need to assign our clusters in the vector to the appropriate places,
-i.e. those that are not masked (*NA*). The unmasked values can be referenced
-by the `complete.cases()` function. In the last step, copy the metadata of
-the `landsat` object, but only with one layer, and assign it the values of
-the `vec` vector.
+The last step is to prepare a classification (so-called **land cover**) map.
+First, we need to prepare an empty vector with the length of the number of
+raster pixels. This can be checked using the `ncell()` function. In our case
+it is 4,182,465. Next, we need to assign our clusters in the vector to the
+appropriate places, i.e. those that are not masked (*NA*). The unmasked values
+can be referenced by the `complete.cases()` function. In the last step, copy
+the metadata of the `landsat` object, but only with one layer, and assign it
+the values of the `vec` vector.
 
 ```{r}
 vec = rep(NA, ncell(landsat)) # prepare an empty vector
@@ -384,8 +384,8 @@ vec[complete.cases(mat)] = mdl$cluster # assign clusters to vector if not NA
 clustering = rast(landsat, nlyrs = 1, vals = vec) # create raster
 ```
 
-Now let's represent the result of clustering on the map (so-called **land cover**)
-using the appropriate colors and names of the clusters.
+Now let's represent the result of clustering on the map using the appropriate
+colors and names of the clusters.
 
 ```{r}
 colors = c("#91632b", "#086209", "#086209", "#fdd327", "#d20000", "#d9d9d9")
