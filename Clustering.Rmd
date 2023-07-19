@@ -24,7 +24,7 @@ return full paths to the files (`full.names = TRUE`).
 
 ```{r}
 # list files from a directory
-files = list.files("dane_cut/", pattern = "\\.TIF$", full.names = TRUE)
+files = list.files("data", pattern = "\\.TIF$", full.names = TRUE)
 files
 ```
  
@@ -53,7 +53,7 @@ Loading vector data is done in an analogous way using the `vect()` function.
 
 ```{r}
 # load vector data
-poly = vect("Poznan.gpkg")
+poly = vect("data/Poznan.gpkg")
 poly
 ```
 
