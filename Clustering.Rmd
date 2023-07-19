@@ -72,13 +72,13 @@ and polygon as an example.
 
 ```{r}
 # visualization
-plot(landsat[[5]], main = "Poznan commune") # alternatively: plot(landsat[["B5"]])
+plot(landsat[[5]], main = "Poznan county") # alternatively: plot(landsat[["B5"]])
 plot(poly, add = TRUE)
 ```
 
 ## Raster processing
 
-The extent of our analysis area is limited to the Poznan commune, while the
+The extent of our analysis area is limited to the Poznan county, while the
 satellite scene has a much larger extent. In such a situation, we can crop the
 rasters, so that their further processing will be faster and the results
 will take up less space on disk. The `crop()` function is used to crop the
@@ -91,7 +91,7 @@ the `mask = TRUE` argument in the aforementioned function.
 
 ```{r}
 landsat = crop(landsat, poly, mask = TRUE)
-plot(landsat[[5]], main = "Poznan commune")
+plot(landsat[[5]], main = "Poznan county")
 plot(poly, add = TRUE)
 ```
 
