@@ -40,7 +40,10 @@ Your computer should have a minimum of 8 GB of RAM.
 
 # Materials &#128681;
 
-You will find the necessary data on Google Drive or Zenodo. After downloading, the data should be unpacked.
+You will find the necessary data on [Google Drive](https://drive.google.com/file/d/1E8OSxv7Gf03ZyHsio1P5xRU276Ifa9zL)
+or [Zenodo](https://zenodo.org/record/8164626). Alternatively, you can download the data from the original
+[EarthExplotter](https://earthexplorer.usgs.gov/) source (scene ID: *LC08_L2SP_191023_20230605_20230613_02_T1*).
+After downloading, the data should be unpacked.
 
 You can download interactive notebooks (*.Rmd*) and static documents (*.html*) from this repository:
 
