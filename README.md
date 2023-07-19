@@ -40,7 +40,14 @@ Your computer should have a minimum of 8 GB of RAM.
 
 # Materials &#128681;
 
-https://kadyb.github.io/OGH2023/Clustering.html
+You will find the necessary data on Google Drive or Zenodo. After downloading, the data should be unpacked.
+
+You can download interactive notebooks (*.Rmd*) and static documents (*.html*) from this repository:
+
+1. [Unsupervised classification](https://kadyb.github.io/OGH2023/Clustering.html)
+2. [Task](https://kadyb.github.io/OGH2023/Task.html)
+
+The description of spectral bands can be found [here](https://landsat.gsfc.nasa.gov/satellites/landsat-8/landsat-8-bands/).
 
 # Contact
 
