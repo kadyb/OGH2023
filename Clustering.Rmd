@@ -68,12 +68,13 @@ crs(poly, describe = TRUE)$code # check EPSG after transformation
 ```
 
 Now we can prepare a simple visualization using the near infrared band (NIR; B5)
-and polygon as an example.
+and polygon as an example. You can either use index (`[[5]]`) or name (`[["B5"]]`)
+to select a band (raster layer).
 
 ```{r}
-# visualization
-plot(landsat[[5]], main = "Poznan county") # alternatively: plot(landsat[["B5"]])
-plot(poly, add = TRUE)
+colors = gray.colors(n = 20) # define the color scheme
+plot(landsat[[5]], main = "Poznan county", col = colors) # plot NIR band
+plot(poly, add = TRUE) # add polygon
 ```
 
 ## Raster processing
@@ -91,7 +92,7 @@ the `mask = TRUE` argument in the aforementioned function.
 
 ```{r}
 landsat = crop(landsat, poly, mask = TRUE)
-plot(landsat[[5]], main = "Poznan county")
+plot(landsat[[5]], main = "Poznan county", col = colors)
 plot(poly, add = TRUE)
 ```
 
@@ -270,7 +271,7 @@ best result. We should try to increase the number of clusters or use another
 clustering method. We can also check the results on the chart.
 
 ```{r}
-colors = rainbow(n = 6) # define the color scheme
+colors = rainbow(n = 6)
 plot(sil, border = NA, col = colors, main = "Silhouette Index")
 ```
 
@@ -362,7 +363,8 @@ absorb radiation. Of course, this is not a correct classification -- water
 objects and forests should be assigned to separate clusters.
 * **Cluster 4** -- cropland (see description of cluster 2).
 * **Cluster 5** -- low reflectance in the visible bands and higher reflectance
-in the NIR and SWIR bands may indicate buildings, generally artificial objects.
+in the NIR and SWIR bands may indicate buildings (urban area), generally
+artificial objects.
 * **Cluster 6** -- relatively high reflection in all bands (including NIR and
 SWIR) indicates a bright object. In this case, they are bare soils without
 vegetation cover, which are usually light brown or grey.
@@ -389,7 +391,7 @@ colors and names of the clusters.
 
 ```{r}
 colors = c("#91632b", "#086209", "#086209", "#fdd327", "#d20000", "#d9d9d9")
-category = c("barren", "forest", "forest/water", "cropland", "buildings", "bare soil")
+category = c("barren", "forest", "forest/water", "cropland", "urban", "bare soil")
 plot(clustering, col = colors, type = "classes", levels = category)
 ```
 
@@ -410,7 +412,7 @@ satellite imagery. The content can be expanded to include more topics on:
 * automatic search and download of satellite data
 * multi-temporal analysis
 * cloud data processing
-* integration of various sensors (e.g. Sentinel, UAV) and data (e.g. DEM)
+* integration of various sensors (e.g. Sentinel 2) and data (e.g. DEM)
 * spatial validation
 * selection of explanatory variables and dimensionality reduction
 
