@@ -1502,6 +1502,17 @@ satellite images</h1>
 </div>
 
 
+<div id="data-acquisition" class="section level2">
+<h2>Data acquisition</h2>
+<p>We can download the dataset from <a href="https://zenodo.org/record/8164626">Zenodo</a> using the
+<code>download.file()</code> function and then unpack the <em>.zip</em>
+archive using the <code>unzip()</code> function. If you downloaded the
+data manually before, you can skip this part.</p>
+<pre class="r"><code>options(timeout = 600) # increase connection timeout
+url = &quot;https://zenodo.org/record/8164626/files/data.zip&quot;
+download.file(url, &quot;data.zip&quot;)
+unzip(&quot;data.zip&quot;)</code></pre>
+</div>
 <div id="data-loading" class="section level2">
 <h2>Data loading</h2>
 <pre class="r"><code># load the package
@@ -1511,17 +1522,18 @@ we are going to load. To do this, we can use the
 <code>list.files()</code> function, which takes a path to a folder with
 files as an argument. In addition, we must indicate what kind of files
 we want to load (<code>pattern = &quot;\\.TIF$&quot;</code>) and return full paths
-to the files (<code>full.names = TRUE</code>).</p>
+to the files (<code>full.names = TRUE</code>). If you unpacked the data
+in a different location, then you must indicate the correct path.</p>
 <pre class="r"><code># list files from a directory
-files = list.files(&quot;data&quot;, pattern = &quot;\\.TIF$&quot;, full.names = TRUE)
+files = list.files(&quot;data/data&quot;, pattern = &quot;\\.TIF$&quot;, full.names = TRUE)
 files</code></pre>
-<pre><code>## [1] &quot;data/LC08_L2SP_191023_20230605_20230613_02_T1_SR_B1.TIF&quot;
-## [2] &quot;data/LC08_L2SP_191023_20230605_20230613_02_T1_SR_B2.TIF&quot;
-## [3] &quot;data/LC08_L2SP_191023_20230605_20230613_02_T1_SR_B3.TIF&quot;
-## [4] &quot;data/LC08_L2SP_191023_20230605_20230613_02_T1_SR_B4.TIF&quot;
-## [5] &quot;data/LC08_L2SP_191023_20230605_20230613_02_T1_SR_B5.TIF&quot;
-## [6] &quot;data/LC08_L2SP_191023_20230605_20230613_02_T1_SR_B6.TIF&quot;
-## [7] &quot;data/LC08_L2SP_191023_20230605_20230613_02_T1_SR_B7.TIF&quot;</code></pre>
+<pre><code>## [1] &quot;data/data/LC08_L2SP_191023_20230605_20230613_02_T1_SR_B1.TIF&quot;
+## [2] &quot;data/data/LC08_L2SP_191023_20230605_20230613_02_T1_SR_B2.TIF&quot;
+## [3] &quot;data/data/LC08_L2SP_191023_20230605_20230613_02_T1_SR_B3.TIF&quot;
+## [4] &quot;data/data/LC08_L2SP_191023_20230605_20230613_02_T1_SR_B4.TIF&quot;
+## [5] &quot;data/data/LC08_L2SP_191023_20230605_20230613_02_T1_SR_B5.TIF&quot;
+## [6] &quot;data/data/LC08_L2SP_191023_20230605_20230613_02_T1_SR_B6.TIF&quot;
+## [7] &quot;data/data/LC08_L2SP_191023_20230605_20230613_02_T1_SR_B7.TIF&quot;</code></pre>
 <p>Once we have created a list of files, we can load them using the
 <code>rast()</code> function from the <strong>terra</strong> package and
 then display the metadata.</p>
@@ -1558,7 +1570,7 @@ names(landsat) # new names</code></pre>
 <p>Loading vector data is done in an analogous way using the
 <code>vect()</code> function.</p>
 <pre class="r"><code># load vector data
-poly = vect(&quot;data/Poznan.gpkg&quot;)
+poly = vect(&quot;data/data/Poznan.gpkg&quot;)
 poly</code></pre>
 <pre><code>##  class       : SpatVector 
 ##  geometry    : polygons 

@@ -9,6 +9,20 @@ output:
 date: "29 August 2023"
 ---
 
+## Data acquisition
+
+We can download the dataset from [Zenodo](https://zenodo.org/record/8164626)
+using the `download.file()` function and then unpack the *.zip* archive using
+the `unzip()` function. If you downloaded the data manually before, you can
+skip this part.
+
+```{r message=FALSE}
+options(timeout = 600) # increase connection timeout
+url = "https://zenodo.org/record/8164626/files/data.zip"
+download.file(url, "data.zip")
+unzip("data.zip")
+```
+
 ## Data loading
 
 ```{r message=FALSE, warning=FALSE}
@@ -20,11 +34,12 @@ In the first step, we need to create a list of files (rasters) that we are
 going to load. To do this, we can use the `list.files()` function, which
 takes a path to a folder with files as an argument. In addition, we must
 indicate what kind of files we want to load (`pattern = "\\.TIF$"`) and
-return full paths to the files (`full.names = TRUE`).
+return full paths to the files (`full.names = TRUE`). If you unpacked the
+data in a different location, then you must indicate the correct path.
 
 ```{r}
 # list files from a directory
-files = list.files("data", pattern = "\\.TIF$", full.names = TRUE)
+files = list.files("data/data", pattern = "\\.TIF$", full.names = TRUE)
 files
 ```
  
@@ -53,7 +68,7 @@ Loading vector data is done in an analogous way using the `vect()` function.
 
 ```{r}
 # load vector data
-poly = vect("data/Poznan.gpkg")
+poly = vect("data/data/Poznan.gpkg")
 poly
 ```
 
